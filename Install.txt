@@ -1,0 +1,6 @@
+På til rhino properties
+gå til "plug-ins"
+trykk "install"
+
+gå til "keyboard"
+legg til "RhClip for CTRL+Shift+V
