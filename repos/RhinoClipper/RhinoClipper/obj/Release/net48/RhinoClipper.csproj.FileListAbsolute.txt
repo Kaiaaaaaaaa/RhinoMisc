@@ -16,3 +16,4 @@ C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMi
 C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Release\net48\RhinoClipper.pdb
 C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\build\Release\net48\RhinoClipper.rhp
 C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\build\Release\net48\RhinoClipper.pdb
+C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Release\net48\RhinoClipper.sourcelink.json

@@ -9,12 +9,3 @@ C:\Users\kaigil\OneDrive - Norconsult Group\Documents\LOCAL\Kaia_koding\C#her\Rh
 C:\Users\kaigil\OneDrive - Norconsult Group\Documents\LOCAL\Kaia_koding\C#her\RhinoClipper\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.pdb
 C:\Users\kaigil\OneDrive - Norconsult Group\Documents\LOCAL\Kaia_koding\C#her\RhinoClipper\build\Debug\net48\RhinoClipper.rhp
 C:\Users\kaigil\OneDrive - Norconsult Group\Documents\LOCAL\Kaia_koding\C#her\RhinoClipper\build\Debug\net48\RhinoClipper.pdb
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.csproj.AssemblyReference.cache
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.AssemblyInfoInputs.cache
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.AssemblyInfo.cs
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.csproj.CoreCompileInputs.cache
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.rhp
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\repos\RhinoClipper\RhinoClipper\obj\Debug\net48\RhinoClipper.pdb
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\build\Debug\net48\RhinoClipper.rhp
-C:\Users\kaigil\OneDriveNorconsult\Documents\LOCAL\Kaia_koding\_Projects\RhinoMisc\build\Debug\net48\RhinoClipper.pdb

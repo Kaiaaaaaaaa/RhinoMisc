@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("Miscellaneous rhino utils")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+4be0885561acb6d37ce095df0e44eaad5c0cec53")]
 [assembly: System.Reflection.AssemblyProductAttribute("RhinoClipper")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RhinoClipper")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

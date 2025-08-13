@@ -57,9 +57,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\kaigil\\OneDriveNorconsult\\Documents\\LOCAL\\Kaia_koding\\_Projects\\RhinoMisc\\repos\\RhinoClipper\\RhinoClipper\\RhinoClipper.csproj",
-      "projectName": "RhinoClipper",
-      "projectPath": "C:\\Users\\kaigil\\OneDriveNorconsult\\Documents\\LOCAL\\Kaia_koding\\_Projects\\RhinoMisc\\repos\\RhinoClipper\\RhinoClipper\\RhinoClipper.csproj",
+      "projectUniqueName": "C:\\Users\\kaigil\\OneDriveNorconsult\\Documents\\LOCAL\\Kaia_koding\\_Projects\\RhinoMisc\\repos\\RhinoClipper\\RhinoClipper\\RhinoMisc.csproj",
+      "projectName": "RhinoMisc",
+      "projectPath": "C:\\Users\\kaigil\\OneDriveNorconsult\\Documents\\LOCAL\\Kaia_koding\\_Projects\\RhinoMisc\\repos\\RhinoClipper\\RhinoClipper\\RhinoMisc.csproj",
       "packagesPath": "C:\\Users\\kaigil\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\kaigil\\OneDriveNorconsult\\Documents\\LOCAL\\Kaia_koding\\_Projects\\RhinoMisc\\repos\\RhinoClipper\\RhinoClipper\\obj\\",
       "projectStyle": "PackageReference",

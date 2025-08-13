@@ -13,17 +13,17 @@ using Rhino.Input.Custom;
 using Rhino.Render;
 using Rhino.UI;
 
-namespace RhinoClipper
+namespace kkRhinoMisc.Commands
 {
-    public class kkRhClip : Command
+    public class RhClip : Command
     {
-        public kkRhClip()
+        public RhClip()
         {
             Instance = this;
         }
 
         ///<summary>The only instance of the MyCommand command.</summary>
-        public static kkRhClip Instance { get; private set; }
+        public static RhClip Instance { get; private set; }
 
         public override string EnglishName => "kkRhClip";
 
@@ -36,15 +36,15 @@ namespace RhinoClipper
             "Temp"
             );
 
-          //  string folderPath = @"C:\Users\kaigil\AppData\Local\Temp";
+            //  string folderPath = @"C:\Users\kaigil\AppData\Local\Temp";
 
             DirectoryInfo directoryInfo = new DirectoryInfo(folderPath);
 
-                // Get all DWG files in the folder
-                FileInfo[] dwgFiles = directoryInfo.GetFiles("*.dwg");
+            // Get all DWG files in the folder
+            FileInfo[] dwgFiles = directoryInfo.GetFiles("*.dwg");
 
-                    // Find the newest DWG file based on last modified timestamp
-                    FileInfo newestDwgFile = dwgFiles.OrderByDescending(f => f.LastWriteTime).First();
+            // Find the newest DWG file based on last modified timestamp
+            FileInfo newestDwgFile = dwgFiles.OrderByDescending(f => f.LastWriteTime).First();
 
 
             RhinoApp.WriteLine(@"Using folder path: " + folderPath);
@@ -53,7 +53,7 @@ namespace RhinoClipper
             // Attempt to import the geometry from the file
 
             bool importSuccess = doc.Import(newestDwgFile.FullName);
-         //   Rhino.RhinoApp.RunScript("_-AgutImportDXF 10 _Enter", true);
+            //   Rhino.RhinoApp.RunScript("_-AgutImportDXF 10 _Enter", true);
 
             if (importSuccess)
             {
@@ -69,5 +69,5 @@ namespace RhinoClipper
 
 
         }
-}
+    }
 }

@@ -1,7 +1,10 @@
 ﻿using System;
 using Rhino;
+using Rhino.PlugIns;
+using Rhino.UI;
+using RhinoMisc.Fov.UI;
 
-namespace RhinoClipper
+namespace kkRhinoMisc
 {
     ///<summary>
     /// <para>Every RhinoCommon .rhp assembly must have one and only one PlugIn-derived
@@ -16,12 +19,19 @@ namespace RhinoClipper
         public kkRhinoMiscPlugin()
         {
             Instance = this;
-            RhinoApp.WriteLine("kkRhinoMisc initialized successfully!");
+            RhinoApp.WriteLine("kkRhinoMisc plugin loaded.");
         }
 
 
         ///<summary>Gets the only instance of the RhinoClipperPlugin plug-in.</summary>
         public static kkRhinoMiscPlugin Instance { get; private set; }
+
+        protected override LoadReturnCode OnLoad(ref string errorMessage)
+        {
+            // Register a dockable panel that hosts our Eto content.
+            Panels.RegisterPanel(this, typeof(RhinoMisc.Fov.UI.FovPanel), "FOV", null /* icon */);
+            return LoadReturnCode.Success;
+        }
 
         // You can override methods here to change the plug-in behavior on
         // loading and shut down, add options pages to the Rhino _Option command
