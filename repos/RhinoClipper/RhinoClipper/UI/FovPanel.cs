@@ -11,16 +11,21 @@ namespace RhinoMisc.Fov.UI
     [Guid("E8A7B3F1-2E24-4D0E-A5B0-5F8A4C0C1B9D")]
     public class FovPanel : Panel
     {
-        // Your panel GUID (generate a new one)
         public static Guid PanelId => typeof(FovPanel).GUID;
 
-        const int MinFovDeg = 5;    // sensible floor to avoid extreme distortion
-        const int MaxFovDeg = 120;   // Rhino’s command allows wide angles too
+        // Bounds + default (adjust to taste)
+        const int MinFovDeg = 5;
+        const int MaxFovDeg = 100;
+        const int DefaultFovDeg = 27;
 
+        // UI
         readonly NumericStepper _deg;   // exact integer degrees
+        readonly Slider _slider;        // same range as stepper
         readonly Button _minus;
         readonly Button _plus;
-        readonly Button _sync;
+        readonly Button _reset;
+
+        bool _suppress; // prevents event feedback when syncing controls
 
         public FovPanel()
         {
@@ -31,40 +36,112 @@ namespace RhinoMisc.Fov.UI
                 MaxValue = MaxFovDeg,
                 DecimalPlaces = 0,
                 Increment = 1,
-                Width = 80
+                Width = 70  // Reduced width to make room for reset button
             };
-            _deg.ValueChanged += (_, __) => ApplyFov((int)_deg.Value);
+            _deg.ValueChanged += (_, __) =>
+            {
+                if (_suppress) return;
+                SetUi(Clamp((int)_deg.Value), apply: true);
+            };
 
-            _minus = new Button { Text = "–1°" };
-            _plus = new Button { Text = "+1°" };
-            _minus.Click += (_, __) => { _deg.Value = Clamp((int)_deg.Value - 1); ApplyFov((int)_deg.Value); };
-            _plus.Click += (_, __) => { _deg.Value = Clamp((int)_deg.Value + 1); ApplyFov((int)_deg.Value); };
+            _minus = new Button { Text = "–1°", Width = 35 };  // Fixed width
+            _plus = new Button { Text = "+1°", Width = 35 };   // Fixed width
+            _minus.Click += (_, __) => SetUi(Clamp((int)_deg.Value - 1), apply: true);
+            _plus.Click += (_, __) => SetUi(Clamp((int)_deg.Value + 1), apply: true);
 
-            _sync = new Button { Text = "Sync from view" };
-            _sync.Click += (_, __) => ReadFovIntoControl();
+            _reset = new Button { Text = "Reset", Width = 50 };  // Fixed width, shorter text
+            _reset.Click += (_, __) => SetUi(DefaultFovDeg, apply: true);
 
-            var content = new DynamicLayout { Padding = new Padding(10), Spacing = new Size(8, 8) };
-            content.AddRow(new Label { Text = "Field of View (°)", VerticalAlignment = VerticalAlignment.Center }, _deg, _minus, _plus);
-            content.AddRow(_sync);
-            Content = content;
+            _slider = new Slider
+            {
+                MinValue = MinFovDeg,
+                MaxValue = MaxFovDeg,
+                Value = DefaultFovDeg,
+                TickFrequency = 0,
+                Height = 22,
+            };
+            _slider.ValueChanged += (_, __) =>
+            {
+                if (_suppress) return;
+                SetUi(Clamp(_slider.Value), apply: true);
+            };
 
-            // Initialize from current active view
-            ReadFovIntoControl();
+            // Row 1: Label + controls distributed evenly
+            var row1 = new TableLayout
+            {
+                Spacing = new Size(8, 0),
+                Rows =
+                {
+                    new TableRow(
+                        new TableCell(new Label { Text = "Field of View (°)", VerticalAlignment = VerticalAlignment.Center }),
+                        new TableCell(_deg),
+                        new TableCell(_minus),
+                        new TableCell(_plus),
+                        new TableCell(_reset)
+                    )
+                }
+            };
+
+            // Main layout: row 1 + full-width slider
+            var layout = new StackLayout
+            {
+                Orientation = Orientation.Vertical,
+                Padding = new Padding(10),
+                Spacing = 8,
+                Items =
+                {
+                    new StackLayoutItem(row1, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(_slider, HorizontalAlignment.Stretch)
+                }
+            };
+
+            Content = layout;
+
+            // Target window size - remove container approach
+            Size = new Size(360, 80);
+            MinimumSize = new Size(360, 80);
+
+            // Override SizeHint if available to force dimensions
+            try
+            {
+                // Some Eto implementations support this
+                if (this.GetType().GetProperty("PreferredSize") != null)
+                    this.GetType().GetProperty("PreferredSize")?.SetValue(this, new Size(360, 80));
+            }
+            catch { /* Ignore if not supported */ }
+
+            // Initialize from active view
+            ReadFovIntoControls();
         }
 
         static int Clamp(int v) => Math.Max(MinFovDeg, Math.Min(MaxFovDeg, v));
 
-        void ReadFovIntoControl()
+        void ReadFovIntoControls()
         {
             var doc = RhinoDoc.ActiveDoc;
             var view = doc?.Views?.ActiveView;
-            if (view == null) return;
+            if (view == null)
+            {
+                SetUi(DefaultFovDeg, apply: false);
+                return;
+            }
 
             var vpi = new ViewportInfo(view.ActiveViewport);
-            // vpi.CameraAngle is HALF of the smaller-dimension FOV, in radians
+            // vpi.CameraAngle is HALF of smaller-dimension FOV, radians
             double halfAngleRad = vpi.CameraAngle;
             int fovDeg = (int)Math.Round(RhinoMath.ToDegrees(halfAngleRad * 2.0));
-            _deg.Value = Clamp(fovDeg);
+            SetUi(Clamp(fovDeg), apply: false);
+        }
+
+        void SetUi(int fovDeg, bool apply)
+        {
+            _suppress = true;
+            _deg.Value = fovDeg;
+            _slider.Value = fovDeg;
+            _suppress = false;
+
+            if (apply)
+                ApplyFov(fovDeg);
         }
 
         static void EnsurePerspective(RhinoView view)
@@ -89,7 +166,6 @@ namespace RhinoMisc.Fov.UI
             double halfAngleRad = RhinoMath.ToRadians(fovDeg * 0.5);
             vpi.CameraAngle = halfAngleRad;
 
-            // Apply and redraw
             vp.SetViewProjection(vpi, true);
             view.Redraw();
 

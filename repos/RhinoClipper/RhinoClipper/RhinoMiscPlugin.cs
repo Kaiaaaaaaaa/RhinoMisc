@@ -19,7 +19,7 @@ namespace kkRhinoMisc
         public kkRhinoMiscPlugin()
         {
             Instance = this;
-            RhinoApp.WriteLine("kkRhinoMisc plugin loaded.");
+            RhinoApp.WriteLine("[kkRhinoMisc] plugin loaded.");
         }
 
 

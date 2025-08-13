@@ -47,8 +47,8 @@ namespace kkRhinoMisc.Commands
             FileInfo newestDwgFile = dwgFiles.OrderByDescending(f => f.LastWriteTime).First();
 
 
-            RhinoApp.WriteLine(@"Using folder path: " + folderPath);
-            RhinoApp.WriteLine(@"File path with full name is: " + newestDwgFile.FullName);
+            RhinoApp.WriteLine(@"[kkRhinoMisc] Using folder path: " + folderPath);
+            RhinoApp.WriteLine(@"[kkRhinoMisc] File path with full name is: " + newestDwgFile.FullName);
 
             // Attempt to import the geometry from the file
 
@@ -57,13 +57,13 @@ namespace kkRhinoMisc.Commands
 
             if (importSuccess)
             {
-                RhinoApp.WriteLine("Geometry imported successfully, yay! :D");
+                RhinoApp.WriteLine("[kkRhinoMisc] Geometry imported successfully, yay! :D");
                 return Result.Success;
 
             }
             else
             {
-                RhinoApp.WriteLine("Failed to import geometry :C");
+                RhinoApp.WriteLine("[kkRhinoMisc] Failed to import geometry :C");
                 return Result.Failure;
             }
 
