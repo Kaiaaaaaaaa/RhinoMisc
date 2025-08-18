@@ -16,14 +16,13 @@ namespace kkRhinoMisc.Commands
         {
             // --- Save and unlock/show all layers ---
             var layerTable = doc.Layers;
-            var originalLayerStates = new List<(int Index, bool IsVisible, bool IsLocked)>();
+            var originalLayerStates = new List<(int Index, bool IsLocked)>();
             for (int i = 0; i < layerTable.Count; i++)
             {
                 var layer = layerTable[i];
-                originalLayerStates.Add((i, layer.IsVisible, layer.IsLocked));
-                if (!layer.IsVisible || layer.IsLocked)
+                originalLayerStates.Add((i, layer.IsLocked));
+                if (layer.IsLocked)
                 {
-                    layer.IsVisible = true;
                     layer.IsLocked = false;
                 }
             }
@@ -76,11 +75,10 @@ namespace kkRhinoMisc.Commands
             }
             finally
             {
-                // --- Restore all layer states ---
-                foreach (var (index, isVisible, isLocked) in originalLayerStates)
+                // --- Restore layer states ---
+                foreach (var (index, isLocked) in originalLayerStates)
                 {
                     var layer = layerTable[index];
-                    layer.IsVisible = isVisible;
                     layer.IsLocked = isLocked;
                 }
                 doc.Views.Redraw();
