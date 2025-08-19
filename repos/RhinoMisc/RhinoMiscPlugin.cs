@@ -29,7 +29,7 @@ namespace kkRhinoMisc
         protected override LoadReturnCode OnLoad(ref string errorMessage)
         {
             // Register a dockable panel that hosts our Eto content.
-            Panels.RegisterPanel(this, typeof(RhinoMisc.Fov.UI.FovPanel), "FOV", null /* icon */);
+            Panels.RegisterPanel(this, typeof(RhinoMisc.Fov.UI.FovPanel), "RhinoMisc", null /* icon */);
             return LoadReturnCode.Success;
         }
 

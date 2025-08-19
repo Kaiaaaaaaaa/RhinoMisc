@@ -5,6 +5,8 @@ using Eto.Drawing;
 using Rhino;
 using Rhino.Display;
 using Rhino.DocObjects;
+using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace RhinoMisc.Fov.UI
 {
@@ -24,6 +26,7 @@ namespace RhinoMisc.Fov.UI
         readonly Button _minus;
         readonly Button _plus;
         readonly Button _reset;
+        readonly TextBox _thisLayer;
 
         bool _suppress; // prevents event feedback when syncing controls
 
@@ -51,6 +54,14 @@ namespace RhinoMisc.Fov.UI
 
             _reset = new Button { Text = "Reset", Width = 50 };  // Fixed width, shorter text
             _reset.Click += (_, __) => SetUi(DefaultFovDeg, apply: true);
+
+            _thisLayer = new TextBox { ReadOnly = true };
+
+            RhinoDoc.SelectObjects += OnSelectionChanged;
+            RhinoDoc.DeselectObjects += OnSelectionChanged;
+            RhinoDoc.DeselectAllObjects += OnDeselectAll;
+            RhinoDoc.ModifyObjectAttributes += OnModifyAttrs;
+            UpdateLayerFromSelection();
 
             _slider = new Slider
             {
@@ -81,8 +92,30 @@ namespace RhinoMisc.Fov.UI
                     )
                 }
             };
+            // Row 2: Layer label
+            var row2 = new TableLayout
+            {
+                Spacing = new Size(8, 0),
+                Rows =
+                {
+                    new TableRow(
+                        new TableCell(new Label { Text = "Selected object layer:", VerticalAlignment = VerticalAlignment.Center })
+                    )
+                }
+            };
+            // Row 3: Text box showing selected object layer
+            var row3 = new TableLayout
+            {
+                Spacing = new Size(8, 0),
+                Rows =
+                {
+                    new TableRow(
+                        new TableCell(_thisLayer, true)
+                    )
+                }
+            };
 
-            // Main layout: row 1 + full-width slider
+            // Main layout constructor
             var layout = new StackLayout
             {
                 Orientation = Orientation.Vertical,
@@ -91,28 +124,37 @@ namespace RhinoMisc.Fov.UI
                 Items =
                 {
                     new StackLayoutItem(row1, HorizontalAlignment.Stretch),
-                    new StackLayoutItem(_slider, HorizontalAlignment.Stretch)
+                    new StackLayoutItem(_slider, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(row2, HorizontalAlignment.Stretch),
+                    new StackLayoutItem(row3, HorizontalAlignment.Stretch)
                 }
             };
 
             Content = layout;
 
-            // Target window size - remove container approach
-            Size = new Size(360, 80);
-            MinimumSize = new Size(360, 80);
+            //// Target window size - remove container approach
+            //Size = new Size(360, 80);
+            //MinimumSize = new Size(360, 80);
 
-            // Override SizeHint if available to force dimensions
-            try
-            {
-                // Some Eto implementations support this
-                if (this.GetType().GetProperty("PreferredSize") != null)
-                    this.GetType().GetProperty("PreferredSize")?.SetValue(this, new Size(360, 80));
-            }
-            catch { /* Ignore if not supported */ }
+            //// Override SizeHint if available to force dimensions
+            //try
+            //{
+            //    // Some Eto implementations support this
+            //    if (this.GetType().GetProperty("PreferredSize") != null)
+            //        this.GetType().GetProperty("PreferredSize")?.SetValue(this, new Size(360, 80));
+            //}
+            //catch (Exception e)
+            //{
+            //    RhinoApp.WriteLine($"[kkRhinoMisc] Encountered unknown error:\n {e}");
+            //}
 
             // Initialize from active view
             ReadFovIntoControls();
         }
+
+        // -------------------------------
+        //      FOV helper functions
+        // -------------------------------
 
         static int Clamp(int v) => Math.Max(MinFovDeg, Math.Min(MaxFovDeg, v));
 
@@ -172,6 +214,101 @@ namespace RhinoMisc.Fov.UI
             // Printing of the degrees, leave off when not debugging I think:
 
             //RhinoApp.WriteLine($"[kkRhinoMisc] FOV set to {fovDeg}° (half-angle {halfAngleRad * 180.0 / Math.PI:0.###}°).");
+        }
+
+        // -------------------------------
+        //  Object layer helper functions
+        // -------------------------------
+        void UpdateLayerFromSelection()
+        {
+            var doc = RhinoDoc.ActiveDoc;
+            if (doc == null) return;
+
+            // Only “real” objects by default
+            var selected = doc.Objects.GetSelectedObjects(includeLights: true, includeGrips: true).ToList();
+
+            if (selected.Count == 0)
+            {
+                _thisLayer.Text = "(no object selected)";
+                return;
+            }
+
+            // Get distinct layer indices of selection
+            var layerIndices = selected.Select(o => o.Attributes.LayerIndex).Distinct().ToList();
+
+            if (layerIndices.Count == 1)
+            {
+                var layer = doc.Layers.FindIndex(layerIndices[0]);
+                _thisLayer.Text = layer != null
+                    ? FormatLayerPath(layer.FullPath)
+                    : "(layer not found :c)";
+            }
+            else
+            {
+                _thisLayer.Text = "Objects on multiple layers";
+            }
+        }
+
+        // Long layer string truncator
+        private static string FormatLayerPath(string fullPath, int maxTotal = 60)
+        {
+            RhinoApp.WriteLine($"[kkRhinoMisc] Length is: {fullPath.Length}");
+            if (string.IsNullOrEmpty(fullPath) || fullPath.Length <= maxTotal)
+                return fullPath;
+
+            var parts = fullPath.Split(new[] { "::" }, StringSplitOptions.None);
+            if (parts.Length == 0) return fullPath;
+
+            const string sep = " :: ";
+
+            int n = parts.Length;
+            int sepTotal = sep.Length * (n - 1);
+
+            // available characters for the parts
+            int budget = maxTotal - sepTotal;
+            if (budget < n) budget = n; // at least 1 char per part
+            RhinoApp.WriteLine($"[kkRhinoMisc] CharBudget is: {budget}");
+
+            // simple floor division
+            int perSegment = budget / n;
+
+            for (int i = 0; i < n; i++)
+            {
+                if (parts[i].Length > perSegment)
+                {
+                    parts[i] = parts[i].Substring(0, perSegment) + "*";
+                }
+            }
+
+            return string.Join(sep, parts);
+        }
+
+        // Handlers
+        void OnSelectionChanged(object sender, RhinoObjectSelectionEventArgs e)
+            => UpdateLayerFromSelection();
+        void OnDeselectAll(object sender, RhinoDeselectAllObjectsEventArgs e)
+            => UpdateLayerFromSelection();
+
+        // Unsubscribe
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                RhinoDoc.SelectObjects -= OnSelectionChanged;
+                RhinoDoc.DeselectObjects -= OnSelectionChanged;
+                RhinoDoc.DeselectAllObjects -= OnDeselectAll;
+                RhinoDoc.ModifyObjectAttributes -= OnModifyAttrs;
+            }
+            base.Dispose(disposing);
+        }
+        // Subscribe to layer update of selected object
+        void OnModifyAttrs(object sender, RhinoModifyObjectAttributesEventArgs e)
+        {
+            if (e?.RhinoObject != null && e.RhinoObject.IsSelected(false) > 0 &&
+                e.OldAttributes.LayerIndex != e.NewAttributes.LayerIndex)
+            {
+                UpdateLayerFromSelection();
+            }
         }
     }
 }
