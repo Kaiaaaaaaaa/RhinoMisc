@@ -6,7 +6,7 @@ using Rhino;
 using Rhino.Display;
 using Rhino.DocObjects;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 
 namespace RhinoMisc.Fov.UI
 {
@@ -29,6 +29,11 @@ namespace RhinoMisc.Fov.UI
         readonly TextBox _thisLayer;
 
         bool _suppress; // prevents event feedback when syncing controls
+
+        // For not getting stuck when rhino is looping through objectx
+        private int _pendingLayerUpdate;
+        private int _idleArmed;
+        private EventHandler _idleHandler;
 
         public FovPanel()
         {
@@ -61,6 +66,25 @@ namespace RhinoMisc.Fov.UI
             RhinoDoc.DeselectObjects += OnSelectionChanged;
             RhinoDoc.DeselectAllObjects += OnDeselectAll;
             RhinoDoc.ModifyObjectAttributes += OnModifyAttrs;
+
+            // Idle checker for layer update
+            _idleHandler = (s, e) =>
+            {
+                try
+                {
+                    if (Interlocked.Exchange(ref _pendingLayerUpdate, 0) == 1)
+                    {
+                        Application.Instance.AsyncInvoke(UpdateLayerFromSelection);
+                        RhinoApp.WriteLine("[kkRhinoMisc] *ping, I'm idle (and safe try/finally)!");
+                    }
+                }
+                finally
+                {
+                    RhinoApp.Idle -= _idleHandler;
+                    Interlocked.Exchange(ref _idleArmed, 0);
+                }
+            };
+
             UpdateLayerFromSelection();
 
             _slider = new Slider
@@ -132,23 +156,6 @@ namespace RhinoMisc.Fov.UI
 
             Content = layout;
 
-            //// Target window size - remove container approach
-            //Size = new Size(360, 80);
-            //MinimumSize = new Size(360, 80);
-
-            //// Override SizeHint if available to force dimensions
-            //try
-            //{
-            //    // Some Eto implementations support this
-            //    if (this.GetType().GetProperty("PreferredSize") != null)
-            //        this.GetType().GetProperty("PreferredSize")?.SetValue(this, new Size(360, 80));
-            //}
-            //catch (Exception e)
-            //{
-            //    RhinoApp.WriteLine($"[kkRhinoMisc] Encountered unknown error:\n {e}");
-            //}
-
-            // Initialize from active view
             ReadFovIntoControls();
         }
 
@@ -212,7 +219,6 @@ namespace RhinoMisc.Fov.UI
             view.Redraw();
 
             // Printing of the degrees, leave off when not debugging I think:
-
             //RhinoApp.WriteLine($"[kkRhinoMisc] FOV set to {fovDeg}° (half-angle {halfAngleRad * 180.0 / Math.PI:0.###}°).");
         }
 
@@ -225,7 +231,7 @@ namespace RhinoMisc.Fov.UI
             if (doc == null) return;
 
             // Only “real” objects by default
-            var selected = doc.Objects.GetSelectedObjects(includeLights: true, includeGrips: true).ToList();
+            var selected = doc.Objects.GetSelectedObjects(includeLights: false, includeGrips: false).ToList();
 
             if (selected.Count == 0)
             {
@@ -252,7 +258,7 @@ namespace RhinoMisc.Fov.UI
         // Long layer string truncator
         private static string FormatLayerPath(string fullPath, int maxTotal = 60)
         {
-            RhinoApp.WriteLine($"[kkRhinoMisc] Length is: {fullPath.Length}");
+            //RhinoApp.WriteLine($"[kkRhinoMisc] Length is: {fullPath.Length}");
             if (string.IsNullOrEmpty(fullPath) || fullPath.Length <= maxTotal)
                 return fullPath;
 
@@ -267,7 +273,7 @@ namespace RhinoMisc.Fov.UI
             // available characters for the parts
             int budget = maxTotal - sepTotal;
             if (budget < n) budget = n; // at least 1 char per part
-            RhinoApp.WriteLine($"[kkRhinoMisc] CharBudget is: {budget}");
+            //RhinoApp.WriteLine($"[kkRhinoMisc] CharBudget is: {budget}");
 
             // simple floor division
             int perSegment = budget / n;
@@ -285,30 +291,51 @@ namespace RhinoMisc.Fov.UI
 
         // Handlers
         void OnSelectionChanged(object sender, RhinoObjectSelectionEventArgs e)
-            => UpdateLayerFromSelection();
-        void OnDeselectAll(object sender, RhinoDeselectAllObjectsEventArgs e)
-            => UpdateLayerFromSelection();
+        {
+            System.Threading.Interlocked.Exchange(ref _pendingLayerUpdate, 1);
+            if (System.Threading.Interlocked.Exchange(ref _idleArmed, 1) == 0)
+                RhinoApp.Idle += _idleHandler;
+        }
 
-        // Unsubscribe
+        void OnDeselectAll(object sender, RhinoDeselectAllObjectsEventArgs e)
+        {
+            System.Threading.Interlocked.Exchange(ref _pendingLayerUpdate, 1);
+            if (System.Threading.Interlocked.Exchange(ref _idleArmed, 1) == 0)
+                RhinoApp.Idle += _idleHandler;
+        }
+
+        void OnModifyAttrs(object sender, RhinoModifyObjectAttributesEventArgs e)
+        {
+            // Batch attribute-change storms: mark pending, arm idle once
+            if (e?.RhinoObject == null) return;
+
+            var active = RhinoDoc.ActiveDoc;
+            if (active == null || e.RhinoObject.Document != active) return;
+
+            if (e.RhinoObject.IsSelected(false) > 0 &&
+                e.OldAttributes.LayerIndex != e.NewAttributes.LayerIndex)
+            {
+                System.Threading.Interlocked.Exchange(ref _pendingLayerUpdate, 1);
+                if (System.Threading.Interlocked.Exchange(ref _idleArmed, 1) == 0)
+                    RhinoApp.Idle += _idleHandler;
+            }
+        }
+
+        // Unsubscribe - .NET method for UI closing gracefull
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
+                if (System.Threading.Interlocked.Exchange(ref _idleArmed, 0) == 1)
+                    RhinoApp.Idle -= _idleHandler;
+
                 RhinoDoc.SelectObjects -= OnSelectionChanged;
                 RhinoDoc.DeselectObjects -= OnSelectionChanged;
                 RhinoDoc.DeselectAllObjects -= OnDeselectAll;
                 RhinoDoc.ModifyObjectAttributes -= OnModifyAttrs;
+                //RhinoApp.WriteLine("[kkRhinoMisc] I have unsubscribed!");
             }
             base.Dispose(disposing);
-        }
-        // Subscribe to layer update of selected object
-        void OnModifyAttrs(object sender, RhinoModifyObjectAttributesEventArgs e)
-        {
-            if (e?.RhinoObject != null && e.RhinoObject.IsSelected(false) > 0 &&
-                e.OldAttributes.LayerIndex != e.NewAttributes.LayerIndex)
-            {
-                UpdateLayerFromSelection();
-            }
         }
     }
 }
