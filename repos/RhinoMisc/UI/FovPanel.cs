@@ -75,7 +75,7 @@ namespace RhinoMisc.Fov.UI
                     if (Interlocked.Exchange(ref _pendingLayerUpdate, 0) == 1)
                     {
                         Application.Instance.AsyncInvoke(UpdateLayerFromSelection);
-                        RhinoApp.WriteLine("[kkRhinoMisc] *ping, I'm idle (and safe try/finally)!");
+                        //RhinoApp.WriteLine("[kkRhinoMisc] *ping, I'm idle (and safe try/finally)!");
                     }
                 }
                 finally
